@@ -1,275 +1,349 @@
 
-import { useEffect } from "react";
-
+import { useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
   Marker,
-  Polyline,
   Popup,
+  Polyline,
+  Circle,
   useMap
 } from "react-leaflet";
-
-import L, { LatLngBounds } from "leaflet";
-
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// ========================================
-// TYPES
-// ========================================
-
-// IMPORTANT:
-// Leaflet coordinates = [latitude, longitude]
-// OSRM coordinates = [longitude, latitude]
-
+// SHARED TYPES
 export type MapPoint = [number, number];
 
-interface LiveNavigationMapProps {
+export type TravelMode =
+  | "car"
+  | "motorcycle"
+  | "walking"
+  | "cycling";
+
+export type NavigationLanguage =
+  | "en-US"
+  | "si-LK"
+  | "ta-IN"
+  | "hi-IN";
+
+export interface NearbyPlace {
+  _id: string;
+  name: string;
+  point: MapPoint;
+  distanceMeters: number;
+}
+
+export interface LiveNavigationMapProps {
   current: MapPoint | null;
   destination: MapPoint | null;
   route: MapPoint[];
+  trail?: MapPoint[];
+  mode?: TravelMode;
+  language?: NavigationLanguage;
+  nearby?: NearbyPlace[];
+  accuracy?: number | null;
+  following?: boolean;
 }
 
-// ========================================
-// DEFAULT MAP LOCATION - SRI LANKA
-// ========================================
+const SRI_LANKA: MapPoint = [7.8731, 80.7718];
 
-const SRI_LANKA_CENTER: MapPoint = [
-  7.8731,
-  80.7718
-];
+function validPoint(
+  point: MapPoint | null | undefined
+): point is MapPoint {
+  return !!point &&
+    Number.isFinite(point[0]) &&
+    Number.isFinite(point[1]) &&
+    Math.abs(point[0]) <= 90 &&
+    Math.abs(point[1]) <= 180;
+}
 
-// ========================================
-// GPS MARKER ICON
-// ========================================
+function createIcon(color: string) {
+  return L.divIcon({
+    className: "gocelone-custom-icon",
+    html: `
+      <div style="
+        width:22px;
+        height:22px;
+        background:${color};
+        border:4px solid white;
+        border-radius:50%;
+        box-shadow:0 2px 12px #0005;
+      "></div>
+    `,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -12]
+  });
+}
 
-const gpsIcon = L.divIcon({
-  className: "gocelone-gps-marker",
-  html: `
-    <div style="
-      width:20px;
-      height:20px;
-      background:#16a34a;
-      border:4px solid #ffffff;
-      border-radius:50%;
-      box-shadow:0 0 0 5px rgba(22,163,74,0.2),
-                 0 3px 10px rgba(0,0,0,0.25);
-    "></div>
-  `,
-  iconSize: [28, 28],
-  iconAnchor: [14, 14]
-});
+const currentIcon = createIcon("#16a34a");
+const destinationIcon = createIcon("#dc2626");
+const nearbyIcon = createIcon("#f59e0b");
 
-// ========================================
-// DESTINATION MARKER ICON
-// ========================================
+interface MapControllerProps {
+  current: MapPoint | null;
+  destination: MapPoint | null;
+  route: MapPoint[];
+  following: boolean;
+}
 
-const destinationIcon = L.divIcon({
-  className: "gocelone-destination-marker",
-  html: `
-    <div style="
-      width:22px;
-      height:22px;
-      background:#dc2626;
-      border:4px solid #ffffff;
-      border-radius:50%;
-      box-shadow:0 0 0 5px rgba(220,38,38,0.18),
-                 0 3px 10px rgba(0,0,0,0.25);
-    "></div>
-  `,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15]
-});
-
-// ========================================
-// AUTOMATIC MAP FITTING
-// ========================================
-
-function MapAutoFit({
+function MapController({
   current,
   destination,
-  route
-}: LiveNavigationMapProps) {
+  route,
+  following
+}: MapControllerProps) {
   const map = useMap();
+  const lastDestinationKey = useRef("");
+  const firstGpsShown = useRef(false);
+  const wasFollowing = useRef(false);
 
   useEffect(() => {
-    const points: MapPoint[] =
-      route.length > 1
-        ? route
-        : [current, destination].filter(
-            (point): point is MapPoint =>
-              point !== null
-          );
+    map.invalidateSize();
 
-    if (points.length === 0) {
-      map.setView(SRI_LANKA_CENTER, 8);
-      return;
-    }
-
-    if (points.length === 1) {
-      map.setView(points[0], 13);
-      return;
-    }
-
-    const bounds = new LatLngBounds(points);
-
-    map.fitBounds(bounds, {
-      padding: [40, 40],
-      maxZoom: 15,
-      animate: true
-    });
-  }, [map, current, destination, route]);
-
-  return null;
-}
-
-// ========================================
-// MAP SIZE / TILE RENDER FIX
-// ========================================
-
-function MapResizeFix() {
-  const map = useMap();
-
-  useEffect(() => {
-    const container = map.getContainer();
+    if (typeof ResizeObserver === "undefined") return;
 
     const observer = new ResizeObserver(() => {
       map.invalidateSize();
     });
 
-    observer.observe(container);
+    observer.observe(map.getContainer());
 
-    const frame = requestAnimationFrame(() => {
-      map.invalidateSize();
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [map]);
+
+  useEffect(() => {
+    if (following) return;
+
+    const key = destination?.join(",") ?? "";
+    const changed = key !== lastDestinationKey.current;
+    const firstGps = validPoint(current) &&
+      !firstGpsShown.current;
+
+    if (!changed && !firstGps) return;
+
+    lastDestinationKey.current = key;
+
+    if (validPoint(current)) {
+      firstGpsShown.current = true;
+    }
+
+    const points: MapPoint[] = [];
+
+    if (validPoint(current)) points.push(current);
+    if (validPoint(destination)) points.push(destination);
+
+    if (route.length > 1) {
+      points.push(...route.filter(validPoint));
+    }
+
+    if (points.length > 1) {
+      map.fitBounds(L.latLngBounds(points), {
+        padding: [45, 45],
+        maxZoom: 15,
+        animate: false
+      });
+    } else if (points.length === 1) {
+      map.setView(points[0], 14);
+    } else {
+      map.setView(SRI_LANKA, 8);
+    }
+  }, [map, current, destination, route, following]);
+
+  useEffect(() => {
+    if (!following || !validPoint(current)) {
+      wasFollowing.current = false;
+      return;
+    }
+
+    if (!wasFollowing.current) {
+      map.setView(current, 16);
+    } else {
+      map.panTo(current, {
+        animate: true,
+        duration: 0.5
+      });
+    }
+
+    wasFollowing.current = true;
+  }, [map, current, following]);
 
   return null;
 }
 
-// ========================================
-// MAIN LIVE NAVIGATION MAP
-// ========================================
-
 export default function LiveNavigationMap({
   current,
   destination,
-  route
+  route,
+  trail = [],
+  mode = "car",
+  language = "en-US",
+  nearby = [],
+  accuracy = null,
+  following = false
 }: LiveNavigationMapProps) {
+  const cleanRoute = route.filter(validPoint);
+  const cleanTrail = trail.filter(validPoint);
+  const cleanNearby = nearby.filter((place) =>
+    validPoint(place.point)
+  );
+
+  const languageNames: Record<
+    NavigationLanguage,
+    string
+  > = {
+    "en-US": "English",
+    "si-LK": "Sinhala",
+    "ta-IN": "Tamil",
+    "hi-IN": "Hindi"
+  };
+
   return (
     <div
       className="live-navigation-map"
       style={{
         width: "100%",
-        height: "450px",
-        minHeight: "450px",
+        height: "500px",
+        position: "relative",
         overflow: "hidden",
         borderRadius: "16px",
-        position: "relative"
+        border: "1px solid #d5e7e5",
+        background: "#e5f0ef"
       }}
     >
       <MapContainer
-        center={SRI_LANKA_CENTER}
+        center={SRI_LANKA}
         zoom={8}
         minZoom={5}
         maxZoom={19}
-        zoomControl={true}
-        scrollWheelZoom={true}
-        attributionControl={true}
-        style={{
-          height: "100%",
-          width: "100%",
-          background: "#e5f0ef"
-        }}
+        scrollWheelZoom
+        zoomControl
+        style={{ width: "100%", height: "100%" }}
       >
-        {/* OPENSTREETMAP TILES */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
           maxZoom={19}
-          tileSize={256}
         />
 
-        {/* AUTOMATIC MAP POSITIONING */}
-        <MapAutoFit
+        <MapController
           current={current}
           destination={destination}
-          route={route}
+          route={cleanRoute}
+          following={following}
         />
 
-        {/* RESIZE FIX */}
-        <MapResizeFix />
-
-        {/* CURRENT GPS MARKER */}
-        {current && (
-          <Marker
-            position={current}
-            icon={gpsIcon}
-          >
-            <Popup>
-              <strong>Your Current Location</strong>
-              <div>
-                Latitude: {current[0].toFixed(6)}
-              </div>
-              <div>
-                Longitude: {current[1].toFixed(6)}
-              </div>
-            </Popup>
-          </Marker>
-        )}
-
-        {/* DESTINATION MARKER */}
-        {destination && (
-          <Marker
-            position={destination}
-            icon={destinationIcon}
-          >
-            <Popup>
-              <strong>Selected Destination</strong>
-              <div>
-                Latitude: {destination[0].toFixed(6)}
-              </div>
-              <div>
-                Longitude: {destination[1].toFixed(6)}
-              </div>
-            </Popup>
-          </Marker>
-        )}
-
-        {/* ROAD ROUTE */}
-        {route.length > 1 && (
+        {cleanRoute.length > 1 && (
           <>
-            {/* White outline */}
             <Polyline
-              positions={route}
+              positions={cleanRoute}
               pathOptions={{
                 color: "#ffffff",
                 weight: 9,
-                opacity: 0.95,
-                lineCap: "round",
-                lineJoin: "round"
+                opacity: 0.9
               }}
             />
-
-            {/* Main route */}
             <Polyline
-              positions={route}
+              positions={cleanRoute}
               pathOptions={{
                 color: "#087f8c",
-                weight: 5,
-                opacity: 1,
-                lineCap: "round",
-                lineJoin: "round"
+                weight: 5
               }}
             />
           </>
         )}
+
+        {cleanTrail.length > 1 && (
+          <Polyline
+            positions={cleanTrail}
+            pathOptions={{
+              color: "#9333ea",
+              weight: 4,
+              dashArray: "8 8"
+            }}
+          />
+        )}
+
+        {validPoint(current) && (
+          <>
+            <Marker position={current} icon={currentIcon}>
+              <Popup>
+                <strong>Current GPS Location</strong>
+                <p>
+                  {current[0].toFixed(6)},{" "}
+                  {current[1].toFixed(6)}
+                </p>
+                {accuracy !== null && (
+                  <p>
+                    Accuracy: {Math.round(accuracy)} m
+                  </p>
+                )}
+              </Popup>
+            </Marker>
+
+            {accuracy !== null &&
+              Number.isFinite(accuracy) &&
+              accuracy > 0 && (
+                <Circle
+                  center={current}
+                  radius={accuracy}
+                  pathOptions={{
+                    color: "#16a34a",
+                    fillColor: "#16a34a",
+                    fillOpacity: 0.06,
+                    weight: 1
+                  }}
+                />
+              )}
+          </>
+        )}
+
+        {validPoint(destination) && (
+          <Marker
+            position={destination}
+            icon={destinationIcon}
+          >
+            <Popup>Selected Destination</Popup>
+          </Marker>
+        )}
+
+        {cleanNearby.map((place) => (
+          <Marker
+            key={place._id}
+            position={place.point}
+            icon={nearbyIcon}
+          >
+            <Popup>
+              <strong>{place.name}</strong>
+              <p>
+                {(place.distanceMeters / 1000).toFixed(2)}
+                {" km away (straight line)"}
+              </p>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
+
+      <div
+        style={{
+          position: "absolute",
+          top: 12,
+          left: 55,
+          zIndex: 800,
+          background: "rgba(255,255,255,.95)",
+          padding: "8px 12px",
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#173b47",
+          pointerEvents: "none"
+        }}
+      >
+        {mode.toUpperCase()} · {languageNames[language]}
+        {" · "}
+        {following ? "LIVE GPS" : "MAP READY"}
+      </div>
     </div>
   );
 }

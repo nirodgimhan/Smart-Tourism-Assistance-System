@@ -1646,3 +1646,133 @@ a.dashboard-module-card:hover {
     min-height: 350px;
   }
 }
+
+
+/* ===========================================
+   GOCELONE LIVE SMART NAVIGATION
+=========================================== */
+
+.live-navigation-map {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  min-height: 400px;
+  overflow: hidden;
+  border: 1px solid #d5e7e5;
+  border-radius: 18px;
+  background: #e5f0ef;
+}
+
+.live-navigation-map .leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.live-navigation-map .leaflet-container img.leaflet-tile,
+.live-navigation-map .leaflet-container img.leaflet-marker-icon {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.gocelone-custom-icon {
+  background: transparent;
+  border: none;
+}
+
+.navigation-options {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #dce8e6;
+}
+
+.navigation-options label {
+  flex: 1;
+  min-width: 160px;
+}
+
+.navigation-options select {
+  width: 100%;
+}
+
+.nearby-place-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.nearby-place-card {
+  padding: 22px;
+  border: 1px solid #d5e7e5;
+  border-radius: 14px;
+  background: #f5faf8;
+}
+
+.nearby-place-card h3 {
+  margin-bottom: 10px;
+}
+
+.nearby-place-card p {
+  color: #647d85;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.nearby-place-card .btn {
+  margin-top: 8px;
+}
+
+.navigation-alerts {
+  margin-top: 24px;
+}
+
+.navigation-alert {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 15px 0;
+  border-bottom: 1px solid #dce8e6;
+}
+
+.navigation-alert svg {
+  color: #167d85;
+  flex-shrink: 0;
+}
+
+.navigation-alert strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #173b47;
+}
+
+.navigation-alert small {
+  display: block;
+  margin-top: 5px;
+  color: #647d85;
+}
+
+@media (max-width: 768px) {
+  .live-navigation-map {
+    height: 380px;
+    min-height: 360px;
+  }
+
+  .navigation-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navigation-options label,
+  .navigation-options button {
+    width: 100%;
+  }
+
+  .nearby-place-grid {
+    grid-template-columns: 1fr;
+  }
+}
