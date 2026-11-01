@@ -13,50 +13,9 @@ import {
 
 import { api, getErrorMessage } from "../../services/api";
 
-type MapPoint = [number, number];
-
-interface NavigationMapProps {
-  current: MapPoint | null;
-  destination: MapPoint | null;
-  route: MapPoint[];
-}
-
-function NavigationMap({
-  current,
-  destination,
-  route
-}: NavigationMapProps) {
-  const points = [...route, ...(current ? [current] : []), ...(destination ? [destination] : [])];
-  const latitudes = points.map(point => point[0]);
-  const longitudes = points.map(point => point[1]);
-  const minLat = Math.min(...latitudes, 0);
-  const maxLat = Math.max(...latitudes, 0);
-  const minLng = Math.min(...longitudes, 0);
-  const maxLng = Math.max(...longitudes, 0);
-  const latSpan = Math.max(maxLat - minLat, 0.001);
-  const lngSpan = Math.max(maxLng - minLng, 0.001);
-  const position = ([latitude, longitude]: MapPoint) =>
-    `${((longitude - minLng) / lngSpan) * 360 + 20},${380 - ((latitude - minLat) / latSpan) * 360}`;
-
-  return (
-    <div className="navigation-map" role="img" aria-label="Route map">
-      <svg viewBox="0 0 400 400" width="100%" height="400" aria-hidden="true">
-        {route.length > 1 && (
-          <polyline
-            points={route.map(position).join(" ")}
-            fill="none"
-            stroke="#2563eb"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        )}
-        {current && <circle cx={position(current).split(",")[0]} cy={position(current).split(",")[1]} r="9" fill="#16a34a" />}
-        {destination && <circle cx={position(destination).split(",")[0]} cy={position(destination).split(",")[1]} r="9" fill="#dc2626" />}
-      </svg>
-    </div>
-  );
-}
+import LiveNavigationMap, {
+  type MapPoint
+} from "../../components/maps/LiveNavigationMap";
 
 interface Destination {
   _id: string;
@@ -82,6 +41,7 @@ interface RoadRoute {
 
 export default function RouteMapPage() {
   const [searchParams] = useSearchParams();
+  const destinationQuery = searchParams.get("destination") || "";
 
   const [current, setCurrent] =
     useState<MapPoint | null>(null);
@@ -92,9 +52,7 @@ export default function RouteMapPage() {
   const [destinations, setDestinations] =
     useState<Destination[]>([]);
 
-  const [selectedId, setSelectedId] = useState(
-    searchParams.get("destination") || ""
-  );
+  const [selectedId, setSelectedId] = useState(destinationQuery);
 
   const [roadRoute, setRoadRoute] =
     useState<RoadRoute | null>(null);
@@ -106,11 +64,14 @@ export default function RouteMapPage() {
   const watchId = useRef<number | null>(null);
   const lastRouteAt = useRef(0);
   const requestId = useRef(0);
+  const destinationRef = useRef<MapPoint | null>(null);
 
   const selected = destinations.find(
-    item => item._id === selectedId
+    (item) => item._id === selectedId
   );
 
+  // Backend GeoJSON: [longitude, latitude]
+  // Leaflet: [latitude, longitude]
   const destination: MapPoint | null = selected
     ? [
         selected.location.coordinates[1],
@@ -118,18 +79,26 @@ export default function RouteMapPage() {
       ]
     : null;
 
-  const destinationRef = useRef<MapPoint | null>(null);
   destinationRef.current = destination;
+
+  // ======================================
+  // LOAD DESTINATIONS
+  // ======================================
 
   useEffect(() => {
     let active = true;
 
-    api.get("/destinations?limit=100")
+    api
+      .get("/destinations?limit=100")
       .then(({ data }) => {
-        if (active) setDestinations(data.items || []);
+        if (active) {
+          setDestinations(data.items || []);
+        }
       })
-      .catch(err => {
-        if (active) setError(getErrorMessage(err));
+      .catch((err) => {
+        if (active) {
+          setError(getErrorMessage(err));
+        }
       });
 
     return () => {
@@ -137,13 +106,16 @@ export default function RouteMapPage() {
     };
   }, []);
 
+  // Sync destination from URL
   useEffect(() => {
-    setSelectedId(
-      searchParams.get("destination") || ""
-    );
+    setSelectedId(destinationQuery);
     setRoadRoute(null);
     requestId.current += 1;
-  }, [searchParams]);
+  }, [destinationQuery]);
+
+  // ======================================
+  // ENABLE GPS
+  // ======================================
 
   function enableGPS() {
     if (!navigator.geolocation) {
@@ -154,7 +126,7 @@ export default function RouteMapPage() {
     setError("");
 
     navigator.geolocation.getCurrentPosition(
-      position => {
+      (position) => {
         setCurrent([
           position.coords.latitude,
           position.coords.longitude
@@ -162,7 +134,9 @@ export default function RouteMapPage() {
 
         setAccuracy(position.coords.accuracy);
       },
-      err => setError(err.message),
+      (err) => {
+        setError(`GPS error: ${err.message}`);
+      },
       {
         enableHighAccuracy: true,
         timeout: 15000,
@@ -170,6 +144,10 @@ export default function RouteMapPage() {
       }
     );
   }
+
+  // ======================================
+  // CALCULATE ROAD ROUTE
+  // ======================================
 
   async function calculateRoute(
     start: MapPoint,
@@ -195,9 +173,15 @@ export default function RouteMapPage() {
         setError(getErrorMessage(err));
       }
     } finally {
-      if (showLoading) setLoading(false);
+      if (id === requestId.current && showLoading) {
+        setLoading(false);
+      }
     }
   }
+
+  // ======================================
+  // SHOW ROUTE
+  // ======================================
 
   function showRoute() {
     if (!current) {
@@ -213,6 +197,10 @@ export default function RouteMapPage() {
     void calculateRoute(current, destination);
   }
 
+  // ======================================
+  // STOP NAVIGATION
+  // ======================================
+
   function stopNavigation() {
     if (watchId.current !== null) {
       navigator.geolocation.clearWatch(watchId.current);
@@ -222,6 +210,10 @@ export default function RouteMapPage() {
     setNavigating(false);
   }
 
+  // ======================================
+  // START LIVE NAVIGATION
+  // ======================================
+
   function startNavigation() {
     if (!current || !destination || !roadRoute) {
       setError("Calculate the road route first.");
@@ -229,7 +221,7 @@ export default function RouteMapPage() {
     }
 
     if (!navigator.geolocation) {
-      setError("GPS not supported.");
+      setError("GPS is not supported.");
       return;
     }
 
@@ -239,7 +231,7 @@ export default function RouteMapPage() {
     lastRouteAt.current = Date.now();
 
     watchId.current = navigator.geolocation.watchPosition(
-      position => {
+      (position) => {
         const point: MapPoint = [
           position.coords.latitude,
           position.coords.longitude
@@ -250,6 +242,8 @@ export default function RouteMapPage() {
 
         const now = Date.now();
 
+        // Recalculate only when GPS is accurate
+        // and at least 30 seconds have passed.
         if (
           destinationRef.current &&
           position.coords.accuracy <= 100 &&
@@ -264,8 +258,8 @@ export default function RouteMapPage() {
           );
         }
       },
-      err => {
-        setError(err.message);
+      (err) => {
+        setError(`GPS tracking error: ${err.message}`);
         stopNavigation();
       },
       {
@@ -278,23 +272,34 @@ export default function RouteMapPage() {
     setNavigating(true);
   }
 
+  // ======================================
+  // CLEANUP GPS TRACKING
+  // ======================================
+
   useEffect(() => {
     return () => {
       if (watchId.current !== null) {
-        navigator.geolocation.clearWatch(
-          watchId.current
-        );
+        navigator.geolocation.clearWatch(watchId.current);
+        watchId.current = null;
       }
     };
   }, []);
 
+  // ======================================
+  // CONVERT BACKEND ROUTE TO LEAFLET
+  // ======================================
+
   const routePoints: MapPoint[] =
     roadRoute?.geometry.coordinates.map(
-      ([longitude, latitude]) => [
+      ([longitude, latitude]): MapPoint => [
         latitude,
         longitude
       ]
     ) || [];
+
+  // ======================================
+  // JSX
+  // ======================================
 
   return (
     <div className="container map-page">
@@ -311,6 +316,7 @@ export default function RouteMapPage() {
         </p>
       </div>
 
+      {/* NAVIGATION CONTROLS */}
       <div className="panel navigation-form">
         <div className="navigation-controls">
           <button
@@ -329,15 +335,18 @@ export default function RouteMapPage() {
             <select
               value={selectedId}
               disabled={navigating}
-              onChange={e => {
+              onChange={(e) => {
                 setSelectedId(e.target.value);
                 setRoadRoute(null);
                 requestId.current += 1;
+                setLoading(false);
               }}
             >
-              <option value="">Select Destination</option>
+              <option value="">
+                Select Destination
+              </option>
 
-              {destinations.map(item => (
+              {destinations.map((item) => (
                 <option
                   key={item._id}
                   value={item._id}
@@ -355,23 +364,36 @@ export default function RouteMapPage() {
             type="button"
             className="btn btn-primary"
             onClick={showRoute}
-            disabled={!current || !destination || loading}
+            disabled={
+              !current ||
+              !destination ||
+              loading
+            }
           >
             <Route size={18} />
             {loading ? "Loading..." : "Show Route"}
           </button>
         </div>
 
+        {/* GPS LOCATION */}
         {current && (
           <p className="gps-status">
             <MapPin size={17} />
-            GPS: {current[0].toFixed(5)},
-            {" "}{current[1].toFixed(5)}
+            GPS: {current[0].toFixed(5)},{" "}
+            {current[1].toFixed(5)}
             {accuracy !== null &&
               ` · Accuracy ${Math.round(accuracy)}m`}
           </p>
         )}
 
+        {accuracy !== null && accuracy > 100 && (
+          <p className="content-note">
+            GPS accuracy is low. Navigation position
+            may be approximate.
+          </p>
+        )}
+
+        {/* ERROR MESSAGE */}
         {error && (
           <div className="form-error" role="alert">
             {error}
@@ -379,42 +401,58 @@ export default function RouteMapPage() {
         )}
       </div>
 
+      {/* ROUTE SUMMARY */}
       {roadRoute && (
         <div className="navigation-summary">
           <div>
             <Route size={24} />
+
             <strong>
-              {(roadRoute.distanceMeters / 1000).toFixed(1)}
-              {" km"}
+              {(
+                roadRoute.distanceMeters / 1000
+              ).toFixed(1)}{" "}
+              km
             </strong>
+
             <span>Road Distance</span>
           </div>
 
           <div>
             <Clock size={24} />
+
             <strong>
-              {Math.round(roadRoute.durationSeconds / 60)}
-              {" min"}
+              {Math.round(
+                roadRoute.durationSeconds / 60
+              )}{" "}
+              min
             </strong>
+
             <span>Estimated Driving Time</span>
           </div>
 
           <div>
             <Navigation size={24} />
+
             <strong>
               {navigating ? "Tracking" : "Ready"}
             </strong>
+
             <span>GPS Status</span>
           </div>
         </div>
       )}
 
-      <NavigationMap
+      {/* ===================================
+          REAL OPENSTREETMAP MAP
+      ==================================== */}
+
+      <LiveNavigationMap
         current={current}
         destination={destination}
         route={routePoints}
       />
 
+      {/* LIVE NAVIGATION */}
       {roadRoute && (
         <div className="panel navigation-bottom">
           <h2>Navigation</h2>
@@ -440,31 +478,35 @@ export default function RouteMapPage() {
           <h3>Driving Directions</h3>
 
           <ol className="directions-list">
-            {roadRoute.instructions.map((step, index) => (
-              <li key={index}>
-                <span className="direction-number">
-                  {index + 1}
-                </span>
+            {(roadRoute.instructions || []).map(
+              (step, index) => (
+                <li key={index}>
+                  <span className="direction-number">
+                    {index + 1}
+                  </span>
 
-                <div>
-                  <p>{step.text}</p>
+                  <div>
+                    <p>{step.text}</p>
 
-                  <small>
-                    {(step.distanceMeters / 1000).toFixed(2)}
-                    {" km"}
-                  </small>
-                </div>
-              </li>
-            ))}
+                    <small>
+                      {(
+                        step.distanceMeters / 1000
+                      ).toFixed(2)}{" "}
+                      km
+                    </small>
+                  </div>
+                </li>
+              )
+            )}
           </ol>
         </div>
       )}
 
       <p className="content-note">
-        GPS accuracy and routes vary. This is an
-        experimental foreground navigation feature,
-        not a replacement for road signs or
-        professional navigation services.
+        GPS accuracy and road routes may vary.
+        This is a prototype foreground navigation
+        feature. Always follow road signs and
+        official directions.
       </p>
     </div>
   );

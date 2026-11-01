@@ -1,6 +1,5 @@
 
-import { useEffect, useMemo } from "react";
-
+import { useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -13,7 +12,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// React Leaflet uses [latitude, longitude].
+// Leaflet uses [latitude, longitude]
 export type MapPoint = [number, number];
 
 interface LiveNavigationMapProps {
@@ -22,49 +21,44 @@ interface LiveNavigationMapProps {
   route: MapPoint[];
 }
 
-// GPS current location marker
-const currentLocationIcon = L.divIcon({
-  className: "gocelone-current-location",
+const SRI_LANKA: MapPoint = [7.8731, 80.7718];
+
+// Current position icon
+const currentIcon = L.divIcon({
+  className: "gocelone-custom-icon",
   html: `
     <div style="
-      width: 22px;
-      height: 22px;
-      background: #167D85;
-      border: 4px solid white;
-      border-radius: 50%;
-      box-shadow: 0 0 0 5px rgba(22,125,133,0.25),
-                  0 3px 10px rgba(0,0,0,0.25);
+      width:22px;
+      height:22px;
+      background:#16a34a;
+      border:4px solid white;
+      border-radius:50%;
+      box-shadow:0 2px 10px #0004;
     "></div>
   `,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15]
+  iconSize: [22, 22],
+  iconAnchor: [11, 11]
 });
 
-// Selected destination marker
+// Destination icon
 const destinationIcon = L.divIcon({
-  className: "gocelone-destination-location",
+  className: "gocelone-custom-icon",
   html: `
     <div style="
-      width: 38px;
-      height: 38px;
-      background: #D55236;
-      color: white;
-      border: 3px solid white;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      font-size: 15px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.3);
-    ">D</div>
+      width:24px;
+      height:24px;
+      background:#dc2626;
+      border:4px solid white;
+      border-radius:50%;
+      box-shadow:0 2px 10px #0004;
+    "></div>
   `,
-  iconSize: [38, 38],
-  iconAnchor: [19, 19]
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
 });
 
-// Auto zoom and center map
-function MapAutoFit({
+// Automatically zoom to route
+function FitMap({
   current,
   destination,
   route
@@ -72,25 +66,43 @@ function MapAutoFit({
   const map = useMap();
 
   useEffect(() => {
-    if (route.length >= 2) {
-      map.fitBounds(L.latLngBounds(route), {
-        padding: [50, 50],
-        maxZoom: 16
+    const points: MapPoint[] = [];
+
+    if (current) points.push(current);
+    if (destination) points.push(destination);
+    if (route.length > 1) points.push(...route);
+
+    if (points.length > 1) {
+      map.fitBounds(L.latLngBounds(points), {
+        padding: [45, 45],
+        maxZoom: 15,
+        animate: false
       });
-    } else if (current && destination) {
-      map.fitBounds(
-        L.latLngBounds([current, destination]),
-        {
-          padding: [50, 50],
-          maxZoom: 16
-        }
-      );
-    } else if (current) {
-      map.setView(current, 15);
-    } else if (destination) {
-      map.setView(destination, 14);
+    } else if (points.length === 1) {
+      map.setView(points[0], 13);
+    } else {
+      map.setView(SRI_LANKA, 8);
     }
   }, [map, current, destination, route]);
+
+  return null;
+}
+
+// Fix map container resize
+function ResizeMap() {
+  const map = useMap();
+
+  useEffect(() => {
+    map.invalidateSize();
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+
+    observer.observe(map.getContainer());
+
+    return () => observer.disconnect();
+  }, [map]);
 
   return null;
 }
@@ -100,61 +112,56 @@ export default function LiveNavigationMap({
   destination,
   route
 }: LiveNavigationMapProps) {
-  const routeCoordinates = useMemo(
-    () => route.filter(
-      point =>
-        Number.isFinite(point[0]) &&
-        Number.isFinite(point[1])
-    ),
-    [route]
-  );
-
   return (
     <div
-      className="navigation-map"
+      className="live-navigation-map"
       style={{
         width: "100%",
-        height: "520px",
-        borderRadius: "16px",
+        height: "480px",
         overflow: "hidden",
-        border: "1px solid #dce8e6"
+        borderRadius: "16px",
+        position: "relative"
       }}
     >
       <MapContainer
-        center={[7.8731, 80.7718]}
+        center={SRI_LANKA}
         zoom={8}
-        scrollWheelZoom={true}
+        minZoom={5}
+        maxZoom={19}
         zoomControl={true}
+        scrollWheelZoom={true}
         style={{
           width: "100%",
           height: "100%"
         }}
       >
-        {/* OpenStreetMap road tiles */}
+        {/* Real OpenStreetMap background */}
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+          maxZoom={19}
         />
 
-        {/* Current GPS position */}
+        <FitMap
+          current={current}
+          destination={destination}
+          route={route}
+        />
+
+        <ResizeMap />
+
         {current && (
-          <Marker
-            position={current}
-            icon={currentLocationIcon}
-          >
+          <Marker position={current} icon={currentIcon}>
             <Popup>
               <strong>Your Current Location</strong>
-              <div>
-                Latitude: {current[0].toFixed(5)}
-              </div>
-              <div>
-                Longitude: {current[1].toFixed(5)}
-              </div>
+              <p>
+                {current[0].toFixed(5)},{" "}
+                {current[1].toFixed(5)}
+              </p>
             </Popup>
           </Marker>
         )}
 
-        {/* Destination marker */}
         {destination && (
           <Marker
             position={destination}
@@ -162,29 +169,35 @@ export default function LiveNavigationMap({
           >
             <Popup>
               <strong>Selected Destination</strong>
+              <p>
+                {destination[0].toFixed(5)},{" "}
+                {destination[1].toFixed(5)}
+              </p>
             </Popup>
           </Marker>
         )}
 
-        {/* Road route from backend OSRM geometry */}
-        {routeCoordinates.length >= 2 && (
-          <Polyline
-            positions={routeCoordinates}
-            pathOptions={{
-              color: "#167D85",
-              weight: 6,
-              opacity: 0.9,
-              lineCap: "round",
-              lineJoin: "round"
-            }}
-          />
-        )}
+        {route.length > 1 && (
+          <>
+            <Polyline
+              positions={route}
+              pathOptions={{
+                color: "#ffffff",
+                weight: 9,
+                opacity: 0.9
+              }}
+            />
 
-        <MapAutoFit
-          current={current}
-          destination={destination}
-          route={routeCoordinates}
-        />
+            <Polyline
+              positions={route}
+              pathOptions={{
+                color: "#087f8c",
+                weight: 5,
+                opacity: 1
+              }}
+            />
+          </>
+        )}
       </MapContainer>
     </div>
   );
