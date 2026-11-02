@@ -1,0 +1,112 @@
+[
+  {
+    "name": "Kandy Budget Guesthouse",
+    "district": "Kandy",
+    "address": "Demo property in Kandy; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Breakfast"],
+    "images": [],
+    "indicativePriceLkr": 9500,
+    "verified": false
+  },
+  {
+    "name": "Kandy Garden Stay",
+    "district": "Kandy",
+    "address": "Demo property in Kandy; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Parking", "Breakfast"],
+    "images": [],
+    "indicativePriceLkr": 19000,
+    "verified": false
+  },
+  {
+    "name": "Kandy Lake View Hotel",
+    "district": "Kandy",
+    "address": "Demo property in Kandy; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Pool", "Breakfast"],
+    "images": [],
+    "indicativePriceLkr": 43000,
+    "verified": false
+  },
+  {
+    "name": "Sigiriya Eco Stay",
+    "district": "Matale",
+    "address": "Demo property in Matale; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Breakfast"],
+    "images": [],
+    "indicativePriceLkr": 18000,
+    "verified": false
+  },
+  {
+    "name": "Dambulla Family Inn",
+    "district": "Matale",
+    "address": "Demo property in Matale; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["Parking", "Family rooms"],
+    "images": [],
+    "indicativePriceLkr": 12500,
+    "verified": false
+  },
+  {
+    "name": "Ella Valley Lodge",
+    "district": "Badulla",
+    "address": "Demo property in Badulla; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Breakfast"],
+    "images": [],
+    "indicativePriceLkr": 16000,
+    "verified": false
+  },
+  {
+    "name": "Ella Boutique Hotel",
+    "district": "Badulla",
+    "address": "Demo property in Badulla; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Mountain view"],
+    "images": [],
+    "indicativePriceLkr": 35000,
+    "verified": false
+  },
+  {
+    "name": "Galle Heritage Guesthouse",
+    "district": "Galle",
+    "address": "Demo property in Galle; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Air conditioning"],
+    "images": [],
+    "indicativePriceLkr": 15500,
+    "verified": false
+  },
+  {
+    "name": "Unawatuna Beach Hotel",
+    "district": "Galle",
+    "address": "Demo property in Galle; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Pool"],
+    "images": [],
+    "indicativePriceLkr": 29000,
+    "verified": false
+  },
+  {
+    "name": "Mirissa Homestay",
+    "district": "Matara",
+    "address": "Demo property in Matara; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Breakfast"],
+    "images": [],
+    "indicativePriceLkr": 14500,
+    "verified": false
+  },
+  {
+    "name": "Polonnaruwa Family Lodge",
+    "district": "Polonnaruwa",
+    "address": "Demo property in Polonnaruwa; not a real listing",
+    "description": "Illustrative hotel record; no verified availability or booking",
+    "amenities": ["WiFi", "Parking"],
+    "images": [],
+    "indicativePriceLkr": 12000,
+    "verified": false
+  }
+]

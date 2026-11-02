@@ -1,0 +1,197 @@
+[
+  {
+    "name": "Temple of the Tooth",
+    "district": "Kandy",
+    "category": "Culture",
+    "description": "Historic cultural landmark in central Kandy.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.6413, 7.2936]
+    },
+    "estimatedFeeLkr": 2500,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Royal Botanical Gardens Peradeniya",
+    "district": "Kandy",
+    "category": "Nature",
+    "description": "Botanical garden with scenic walking paths.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.5967, 7.2686]
+    },
+    "estimatedFeeLkr": 3000,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Kandy Lake",
+    "district": "Kandy",
+    "category": "Nature",
+    "description": "Lakeside walk and local views.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.6431, 7.2901]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Udawatta Kele Sanctuary",
+    "district": "Kandy",
+    "category": "Adventure",
+    "description": "Woodland walks near Kandy.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.6454, 7.2999]
+    },
+    "estimatedFeeLkr": 1500,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Sigiriya Rock Fortress",
+    "district": "Matale",
+    "category": "Culture",
+    "description": "Ancient heritage site near Sigiriya.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.7603, 7.957]
+    },
+    "estimatedFeeLkr": 6500,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Dambulla Cave Temple",
+    "district": "Matale",
+    "category": "Culture",
+    "description": "Cultural temple complex.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.648, 7.8569]
+    },
+    "estimatedFeeLkr": 2000,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Pidurangala Rock",
+    "district": "Matale",
+    "category": "Adventure",
+    "description": "Scenic viewpoint; requires a climb.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.7572, 7.9658]
+    },
+    "estimatedFeeLkr": 1000,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Nine Arch Bridge",
+    "district": "Badulla",
+    "category": "Nature",
+    "description": "Scenic railway bridge near Ella.",
+    "location": {
+      "type": "Point",
+      "coordinates": [81.0619, 6.8767]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Little Adams Peak",
+    "district": "Badulla",
+    "category": "Adventure",
+    "description": "Short hill walk near Ella.",
+    "location": {
+      "type": "Point",
+      "coordinates": [81.0671, 6.8661]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Ravana Falls",
+    "district": "Badulla",
+    "category": "Nature",
+    "description": "Waterfall viewpoint on Ella-Wellawaya road.",
+    "location": {
+      "type": "Point",
+      "coordinates": [81.0446, 6.8416]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Galle Fort",
+    "district": "Galle",
+    "category": "Culture",
+    "description": "Historic coastal fort area.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.217, 6.0328]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Unawatuna Beach",
+    "district": "Galle",
+    "category": "Beaches",
+    "description": "Beach suitable for relaxing.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.2493, 6.0103]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Jungle Beach",
+    "district": "Galle",
+    "category": "Beaches",
+    "description": "Secluded beach area.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.2455, 6.0195]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Mirissa Beach",
+    "district": "Matara",
+    "category": "Beaches",
+    "description": "South-coast beach experience.",
+    "location": {
+      "type": "Point",
+      "coordinates": [80.4585, 5.9465]
+    },
+    "estimatedFeeLkr": 0,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  },
+  {
+    "name": "Polonnaruwa Ancient City",
+    "district": "Polonnaruwa",
+    "category": "Culture",
+    "description": "Historic archaeological area.",
+    "location": {
+      "type": "Point",
+      "coordinates": [81.0031, 7.9403]
+    },
+    "estimatedFeeLkr": 3500,
+    "verified": false,
+    "source": "Gocelone demo dataset"
+  }
+]

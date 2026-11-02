@@ -1,0 +1,139 @@
+[
+  {
+    "name": "Kandy Family Discovery",
+    "description": "Culture, nature and relaxed activities for a family. Demo package template.",
+    "tripTypes": ["family", "group"],
+    "districts": ["Kandy"],
+    "interests": ["Culture", "Nature"],
+    "days": 3,
+    "indicativeFromLkr": 65000,
+    "featuredDestinations": [
+      "Temple of the Tooth",
+      "Royal Botanical Gardens Peradeniya",
+      "Kandy Lake"
+    ],
+    "active": true,
+    "highlights": [
+      "Temple of the Tooth",
+      "Kandy viewpoints",
+      "Botanical gardens"
+    ],
+    "inclusions": [
+      "Suggested family-friendly route",
+      "Sample activity recommendations"
+    ],
+    "exclusions": [
+      "Real bookings",
+      "Transport",
+      "Hotel fees",
+      "Tickets"
+    ],
+    "minTravelers": 1,
+    "maxTravelers": 20
+  },
+  {
+    "name": "Romantic Hill Country",
+    "description": "Hill country walks, viewpoints and cafes. Demo template; no real bookings.",
+    "tripTypes": ["couple"],
+    "districts": ["Badulla"],
+    "interests": ["Nature", "Adventure"],
+    "days": 3,
+    "indicativeFromLkr": 78000,
+    "featuredDestinations": [
+      "Nine Arch Bridge",
+      "Little Adams Peak",
+      "Ravana Falls"
+    ],
+    "active": true,
+    "highlights": [
+      "Nine Arch Bridge",
+      "Ella hiking",
+      "Scenic waterfalls"
+    ],
+    "inclusions": [
+      "Suggested scenic day plan",
+      "Sample accommodation recommendations"
+    ],
+    "exclusions": [
+      "Real bookings",
+      "Tickets",
+      "Meals",
+      "Transport"
+    ],
+    "minTravelers": 1,
+    "maxTravelers": 20
+  },
+  {
+    "name": "Heritage Explorer",
+    "description": "Sri Lankan heritage sites and cultural highlights.",
+    "tripTypes": [
+      "solo",
+      "friends",
+      "family",
+      "group"
+    ],
+    "districts": ["Matale", "Polonnaruwa"],
+    "interests": ["Culture"],
+    "days": 4,
+    "indicativeFromLkr": 100000,
+    "featuredDestinations": [
+      "Sigiriya Rock Fortress",
+      "Dambulla Cave Temple",
+      "Polonnaruwa Ancient City"
+    ],
+    "active": true,
+    "highlights": [
+      "Sigiriya",
+      "Dambulla caves",
+      "Ancient heritage sites"
+    ],
+    "inclusions": [
+      "Suggested cultural itinerary",
+      "Sample attraction notes"
+    ],
+    "exclusions": [
+      "Real bookings",
+      "Entrance tickets",
+      "Guide fees",
+      "Hotels"
+    ],
+    "minTravelers": 1,
+    "maxTravelers": 20
+  },
+  {
+    "name": "Southern Beach Escape",
+    "description": "Beaches and historic coastal sights.",
+    "tripTypes": [
+      "couple",
+      "friends",
+      "family"
+    ],
+    "districts": ["Galle", "Matara"],
+    "interests": ["Beaches", "Culture"],
+    "days": 3,
+    "indicativeFromLkr": 72000,
+    "featuredDestinations": [
+      "Galle Fort",
+      "Unawatuna Beach",
+      "Mirissa Beach"
+    ],
+    "active": true,
+    "highlights": [
+      "Galle Fort",
+      "Unawatuna",
+      "Mirissa"
+    ],
+    "inclusions": [
+      "Suggested coastal itinerary",
+      "Sample attraction recommendations"
+    ],
+    "exclusions": [
+      "Real bookings",
+      "Accommodation",
+      "Transport",
+      "Meals"
+    ],
+    "minTravelers": 1,
+    "maxTravelers": 20
+  }
+]
