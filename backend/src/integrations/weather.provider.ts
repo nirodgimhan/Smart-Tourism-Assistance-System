@@ -17,11 +17,17 @@ export interface OpenMeteoResponse {
   timezone: string;
   timezone_abbreviation: string;
   elevation: number;
-  current_weather?: {
-    temperature: number;
-    windspeed: number;
-    winddirection: number;
+  // Current weather values (requested via `current` parameter)
+  current?: {
+    temperature_2m: number;
+    relativehumidity_2m: number;
+    apparent_temperature: number;
+    precipitation: number;
+    rain: number;
+    windspeed_10m: number;
+    winddirection_10m: number;
     weathercode: number;
+    uv_index: number;
     time: string;
   };
   hourly?: {
@@ -46,6 +52,7 @@ export interface OpenMeteoResponse {
     uv_index_max?: number[];
   };
 }
+
 
 /**
  * Normalized weather data used by the rest of the backend.
