@@ -286,13 +286,22 @@ export async function fetchWeather(
 
   // -------------------- UV index lookup (match timestamp) ---------------
   const currentTime = c.time;
-  const timeIdx = data.hourly.time.findIndex((t) => t === currentTime);
+  // Find the hourly entry that corresponds to the same date and hour as the current time.
+  // Open‑Meteo reports the current timestamp at 15‑minute granularity, while the
+  // hourly series is on the hour. We match by the leading "YYYY-MM-DDTHH" part.
+  const hourPrefix = currentTime.slice(0, 13); // e.g. "2026-11-22T14"
+  const timeIdx = data.hourly.time.findIndex((t) => t.startsWith(hourPrefix));
   if (timeIdx === -1) {
     throw new Error(
       "Current timestamp not found in hourly.time series – cannot determine UV index"
     );
   }
+  // The hourly UV index represents the mean/forecast for the preceding hour,
+  // not an exact instantaneous current UV measurement.
   const uvIndexCurrent = data.hourly.uv_index![timeIdx];
+  if (typeof uvIndexCurrent !== "number" || !Number.isFinite(uvIndexCurrent)) {
+    throw new Error("UV index for current hour is missing or not a finite number");
+  }
 
   // -------------------- Validate daily arrays against daily.time length -----
   const dailyLen = data.daily.time.length;
