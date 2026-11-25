@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { fail, unavailable } from "../utils/http.js";
-import { getWeatherForecast } from "../services/weather.service.js";
+import { getWeatherForecast, getWeatherAlerts as getWeatherAlertsService } from "../services/weather.service.js";
 
 /**
  * GET /forecast?lat=<number>&lon=<number>
@@ -59,6 +59,12 @@ export async function getForecast(req: Request, res: Response): Promise<void> {
   }
 }
 
-export function getWeatherAlerts(_req: Request, res: Response): void {
-  unavailable(res, "Verified official weather alert feed");
+export async function getWeatherAlerts(_req: Request, res: Response): Promise<void> {
+  try {
+    const alerts = await getWeatherAlertsService();
+    res.status(200).json({ success: true, data: alerts });
+  } catch (error) {
+    fail(res, error);
+  }
 }
+

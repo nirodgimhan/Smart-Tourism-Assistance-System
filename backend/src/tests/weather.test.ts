@@ -2,14 +2,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
 
-// Mock the provider (fetchWeather) – it is used by the service.
+// Mock the provider (fetchWeather & fetchWeatherAlerts) – used by the service.
 vi.mock("../integrations/weather.provider.js", () => ({
   fetchWeather: vi.fn(),
+  fetchWeatherAlerts: vi.fn(),
 }));
 
-import { fetchWeather } from "../integrations/weather.provider.js";
-import { getWeatherForecast } from "../services/weather.service.js";
-import { getForecast } from "../controllers/weather.controller.js";
+import { fetchWeather, fetchWeatherAlerts } from "../integrations/weather.provider.js";
+import { getWeatherForecast, getWeatherAlerts as getWeatherAlertsService } from "../services/weather.service.js";
+import { getForecast, getWeatherAlerts as getWeatherAlertsController } from "../controllers/weather.controller.js";
 
 // Minimal NormalizedWeather shape used in tests.
 const mockWeather = {
@@ -50,6 +51,23 @@ const mockWeather = {
   },
 } as const;
 
+// Sample NormalizedWeatherAlert for testing.
+const mockAlert = {
+  identifier: "test-id",
+  title: "Test Alert",
+  description: "Test description",
+  severity: "Severe",
+  urgency: "Immediate",
+  certainty: "Observed",
+  event: "Test Event",
+  area: "Test Area",
+  effective: "2024-01-01T01:00:00Z",
+  expires: "2024-01-02T01:00:00Z",
+  sender: "test-sender",
+  sent: "2024-01-01T00:00:00Z",
+  sourceUrl: "https://was.meteo.gov.lk/cap/en/alert1.xml",
+} as const;
+
 // Helper to create mock Express response object.
 function createMockResponse() {
   const res: any = {};
@@ -69,6 +87,7 @@ function createMockResponse() {
 describe("Weather Service", () => {
   beforeEach(() => {
     (fetchWeather as any).mockReset();
+    (fetchWeatherAlerts as any).mockReset();
   });
 
   it("returns data for valid coordinates", async () => {
@@ -91,9 +110,30 @@ describe("Weather Service", () => {
   });
 
   it("throws for non‑finite numbers", async () => {
-    await expect(getWeatherForecast(NaN, Infinity)).rejects.toThrow(
-      "Latitude and longitude must be finite numbers"
-    );
+    await expect(
+      getWeatherForecast(NaN, Infinity)
+    ).rejects.toThrow("Latitude and longitude must be finite numbers");
+  });
+
+  // ---- Weather Alerts Service Tests ----
+  it("alerts service returns data when provider resolves", async () => {
+    (fetchWeatherAlerts as any).mockResolvedValue([mockAlert]);
+    const result = await getWeatherAlertsService();
+    expect(result).toEqual([mockAlert]);
+    expect(fetchWeatherAlerts).toHaveBeenCalled();
+  });
+
+  it("alerts service returns empty array when provider resolves empty", async () => {
+    (fetchWeatherAlerts as any).mockResolvedValue([]);
+    const result = await getWeatherAlertsService();
+    expect(result).toEqual([]);
+    expect(fetchWeatherAlerts).toHaveBeenCalled();
+  });
+
+  it("alerts service propagates provider errors", async () => {
+    (fetchWeatherAlerts as any).mockRejectedValue(new Error("Provider error"));
+    await expect(getWeatherAlertsService()).rejects.toThrow("Provider error");
+    expect(fetchWeatherAlerts).toHaveBeenCalled();
   });
 });
 
@@ -148,6 +188,40 @@ describe("Weather Forecast controller", () => {
     const req = { query: { lat: "6.9", lon: "79.8" } } as unknown as Request;
     const res = createMockResponse();
     await getForecast(req, res);
+    expect(res.statusCode).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Unexpected server error");
+  });
+});
+
+describe("Weather Alerts controller", () => {
+  beforeEach(() => {
+    (fetchWeatherAlerts as any).mockReset();
+  });
+
+  it("returns alerts → 200 when alerts exist", async () => {
+    (fetchWeatherAlerts as any).mockResolvedValue([mockAlert]);
+    const req = {} as unknown as Request; // no query needed
+    const res = createMockResponse();
+    await getWeatherAlertsController(req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ success: true, data: [mockAlert] });
+  });
+
+  it("returns empty alerts → 200 when none exist", async () => {
+    (fetchWeatherAlerts as any).mockResolvedValue([]);
+    const req = {} as unknown as Request;
+    const res = createMockResponse();
+    await getWeatherAlertsController(req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ success: true, data: [] });
+  });
+
+  it("provider error → 500", async () => {
+    (fetchWeatherAlerts as any).mockRejectedValue(new Error("Provider error"));
+    const req = {} as unknown as Request;
+    const res = createMockResponse();
+    await getWeatherAlertsController(req, res);
     expect(res.statusCode).toBe(500);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Unexpected server error");
