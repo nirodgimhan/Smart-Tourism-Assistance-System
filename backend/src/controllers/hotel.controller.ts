@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import { Hotel } from "../models/Hotel.model.js";
-import { fail, unavailable } from "../utils/http.js";
+import { fail } from "../utils/http.js";
+import { hotelRecommendationSchema } from "../validators/hotel.schema.js";
+import { recommendHotels as recommendHotelsService } from "../services/hotel.service.js";
 
 export async function getHotels(
   req: Request,
@@ -84,9 +86,24 @@ export async function getHotelById(
   }
 }
 
-export function recommendHotels(
-  _req: Request,
+export async function recommendHotels(
+  req: Request,
   res: Response
-): void {
-  unavailable(res, "Hotel recommendation model");
+): Promise<void> {
+  const parseResult = hotelRecommendationSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({
+      success: false,
+      message: "Invalid recommendation criteria",
+      errors: parseResult.error.format()
+    });
+    return;
+  }
+
+  try {
+    const results = await recommendHotelsService(parseResult.data);
+    res.status(200).json({ success: true, items: results });
+  } catch (error) {
+    fail(res, error);
+  }
 }
